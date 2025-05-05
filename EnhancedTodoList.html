@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Todo List</title>
+</head>
+<style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      background: #f0f0f0;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    input, button {
+      padding: 0.5rem;
+      margin: 0.5rem 0;
+      font-size: 1rem;
+    }
+
+    #todoInput, #searchInput {
+      width: 60%;
+    }
+
+    #addBtn {
+      padding: 0.6rem 1rem;
+      margin-left: 0.5rem;
+    }
+
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    li {
+      background: #fff;
+      margin: 0.5rem 0;
+      padding: 0.8rem;
+      border: 1px solid #ccc;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    li.completed span {
+      text-decoration: line-through;
+      color: gray;
+    }
+
+    .actions button {
+      margin-left: 0.5rem;
+    }
+  </style>
+
+<body>
+    
+    <h1>Todo List</h1>
+
+    <input type="text" id="todoInput" placeholder="Add a new task..." />
+    <button id="addBtn">Add</button>
+  
+    <br />
+  
+    <input type="text" id="searchInput" placeholder="Search tasks..." />
+  
+    <ul id="todoList"></ul>
+  
+    <script>
+      const todoInput = document.getElementById('todoInput');
+      const addBtn = document.getElementById('addBtn');
+      const todoList = document.getElementById('todoList');
+      const searchInput = document.getElementById('searchInput');
+  
+      let todos = [];
+  
+      // Generate a unique ID
+      const generateId = () => '_' + Math.random().toString(36).substr(2, 9);
+  
+      // Load tasks from localStorage
+      function loadTodos() {
+        const stored = localStorage.getItem('todos');
+        todos = stored ? JSON.parse(stored) : [];
+        renderTodos();
+      }
+  
+      // Save to localStorage
+      function saveTodos() {
+        localStorage.setItem('todos', JSON.stringify(todos));
+      }
+  
+      // Render task list
+      function renderTodos(filter = '') {
+        todoList.innerHTML = '';
+        todos
+          .filter(todo => todo.text.toLowerCase().includes(filter.toLowerCase()))
+          .forEach(todo => {
+            const li = document.createElement('li');
+            li.className = todo.completed ? 'completed' : '';
+            
+            const span = document.createElement('span');
+            span.textContent = todo.text;
+            span.style.cursor = 'pointer';
+            span.onclick = () => toggleComplete(todo.id);
+  
+            const actions = document.createElement('div');
+            actions.className = 'actions';
+  
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.onclick = () => deleteTodo(todo.id);
+  
+            actions.appendChild(deleteBtn);
+  
+            li.appendChild(span);
+            li.appendChild(actions);
+            todoList.appendChild(li);
+          });
+      }
+  
+      // Add a new task
+      function addTodo() {
+        const text = todoInput.value.trim();
+        if (!text) {
+          alert('Please enter a task.');
+          return;
+        }
+        const newTodo = {
+          id: generateId(),
+          text,
+          completed: false
+        };
+        todos.push(newTodo);
+        saveTodos();
+        renderTodos();
+        todoInput.value = '';
+      }
+  
+      // Toggle completed
+      function toggleComplete(id) {
+        todos = todos.map(todo =>
+          todo.id === id ? { ...todo, completed: !todo.completed } : todo
+        );
+        saveTodos();
+        renderTodos(searchInput.value);
+      }
+  
+      // Delete a task
+      function deleteTodo(id) {
+        todos = todos.filter(todo => todo.id !== id);
+        saveTodos();
+        renderTodos(searchInput.value);
+      }
+  
+      // Event listeners
+      addBtn.addEventListener('click', addTodo);
+      searchInput.addEventListener('input', () => renderTodos(searchInput.value));
+      window.addEventListener('DOMContentLoaded', loadTodos);
+    </script>
+  
+</body>
+</html>
