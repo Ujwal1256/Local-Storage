@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart</title>
+    <style>
+        body {
+          font-family: Arial, sans-serif;
+          padding: 20px;
+          max-width: 800px;
+          margin: auto;
+        }
+    
+        input[type="text"],
+        input[type="number"] {
+          margin: 5px;
+          padding: 5px;
+        }
+    
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 10px;
+        }
+    
+        th, td {
+          border: 1px solid #ccc;
+          padding: 8px;
+          text-align: center;
+        }
+    
+        #cartSection {
+          margin-top: 20px;
+        }
+    
+        button {
+          margin: 5px;
+          padding: 5px 10px;
+        }
+      </style>
+</head>
+<body>
+    <h2>Login</h2>
+    <input type="text" id="usernameInput" placeholder="Enter unique username">
+    <button onclick="login()">Login</button>
+  
+    <div id="cartSection" style="display: none;">
+      <h3 id="userCartTitle"></h3>
+  
+      <h4>Add Item</h4>
+      <input type="text" id="itemName" placeholder="Item Name">
+      <input type="number" id="itemPrice" placeholder="Price">
+      <input type="number" id="itemQty" placeholder="Qty">
+      <button onclick="addItem()">Add</button>
+  
+      <h4>Shopping Cart</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Price ($)</th>
+            <th>Quantity</th>
+            <th>Total ($)</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="cartBody"></tbody>
+      </table>
+  
+      <p><strong>Total Cost: $<span id="totalCost">0</span></strong></p>
+    </div>
+  
+    <script>
+      let currentUser = '';
+      let cartData = {};
+  
+      function login() {
+        const input = document.getElementById("usernameInput").value.trim();
+        if (!input) {
+          alert("Please enter a valid username.");
+          return;
+        }
+  
+        currentUser = input;
+        const stored = localStorage.getItem("shoppingCarts");
+        cartData = stored ? JSON.parse(stored) : {};
+  
+        if (!cartData[currentUser]) {
+          cartData[currentUser] = [];
+        }
+  
+        document.getElementById("userCartTitle").textContent = `${currentUser}'s Cart`;
+        document.getElementById("cartSection").style.display = "block";
+        loadCart();
+      }
+  
+      function saveCart() {
+        localStorage.setItem("shoppingCarts", JSON.stringify(cartData));
+      }
+  
+      function addItem() {
+        const name = document.getElementById("itemName").value.trim();
+        const price = parseFloat(document.getElementById("itemPrice").value);
+        const qty = parseInt(document.getElementById("itemQty").value);
+  
+        if (!name || isNaN(price) || isNaN(qty) || qty <= 0) {
+          alert("Please enter valid item details.");
+          return;
+        }
+  
+        const userCart = cartData[currentUser];
+        const existing = userCart.find(item => item.itemName === name);
+  
+        if (existing) {
+          existing.quantity += qty;
+        } else {
+          userCart.push({ itemName: name, price: price, quantity: qty });
+        }
+  
+        saveCart();
+        loadCart();
+  
+        // Clear input fields
+        document.getElementById("itemName").value = '';
+        document.getElementById("itemPrice").value = '';
+        document.getElementById("itemQty").value = '';
+      }
+  
+      function loadCart() {
+        const cart = cartData[currentUser];
+        const tbody = document.getElementById("cartBody");
+        tbody.innerHTML = "";
+        let total = 0;
+  
+        cart.forEach((item, idx) => {
+          const itemTotal = item.price * item.quantity;
+          total += itemTotal;
+  
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${item.itemName}</td>
+            <td>${item.price.toFixed(2)}</td>
+            <td>
+              <input type="number" min="1" value="${item.quantity}" onchange="updateQty(${idx}, this.value)">
+            </td>
+            <td>${itemTotal.toFixed(2)}</td>
+            <td><button onclick="removeItem(${idx})">Remove</button></td>
+          `;
+          tbody.appendChild(tr);
+        });
+  
+        document.getElementById("totalCost").textContent = total.toFixed(2);
+      }
+  
+      function updateQty(index, newQty) {
+        const qty = parseInt(newQty);
+        if (isNaN(qty) || qty < 1) {
+          alert("Invalid quantity.");
+          return;
+        }
+        cartData[currentUser][index].quantity = qty;
+        saveCart();
+        loadCart();
+      }
+  
+      function removeItem(index) {
+        cartData[currentUser].splice(index, 1);
+        saveCart();
+        loadCart();
+      }
+    </script>
+</body>
+</html>
